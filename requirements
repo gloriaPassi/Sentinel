@@ -1,0 +1,10 @@
+streamlit
+feedparser
+textblob
+pandas
+google
+requests
+plotly
+streamlit-option-menu
+pytz
+transformers

@@ -1,0 +1,12 @@
+{
+  "entreprise_1": {
+    "username": "admin",
+    "password": "admin",
+    "nom_affichage": "Entreprise Alpha"
+  },
+  "entreprise_2": {
+    "username": "admin2",
+    "password": "mdp456",
+    "nom_affichage": "Entreprise Beta"
+  }
+}
