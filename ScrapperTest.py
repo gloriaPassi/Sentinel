@@ -18,6 +18,7 @@ import pandas as pd
 import pytz
 import re
 from transformers import pipeline
+from urllib.parse import urlparse
 
 
 
@@ -628,7 +629,7 @@ elif page == "Configuration":
     # Gestion des sources
     st.markdown("""
 <div style="background-color:#FF8C00; padding:10px 20px; border-radius:8px; margin-top:20px; margin-bottom:10px;">
-    <h3 style="color:white; margin:0;">Surveillance des sources RSS </h3>
+    <h3 style="color:white; margin:0;">Surveillance des sources </h3>
 </div>
 """, unsafe_allow_html=True)
 
@@ -643,7 +644,7 @@ elif page == "Configuration":
             save_sources(sources)
             
 
-    new_source = st.text_input("Ajouter une nouvelle source RSS")
+    new_source = st.text_input("Ajouter une nouvelle source")
     if st.button("Ajouter") and new_source:
         sources.append(new_source)
         save_sources(sources)
@@ -651,27 +652,98 @@ elif page == "Configuration":
 
     # Gestion des Mots-clés
     st.markdown("---")
-    st.markdown("""
-<div style="background-color:#922B21; padding:10px 20px; border-radius:8px; margin-top:20px; margin-bottom:10px;">
-    <h3 style="color:white; margin:0;">Mots ou phrases clés</h3>
-</div>
-""", unsafe_allow_html=True)
+ 
+    DICT_FILE = "data/dictionnaires_mots_cles.json"       # Dictionnaire structuré
+    FLAT_FILE = KEYWORDS_FILE      # Liste plate des mots
 
-    keywords = load_keywords()
+    # Charger dictionnaire structuré
+    def load_keyword_dict():
+        if os.path.exists(DICT_FILE):
+            with open(DICT_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return {}
 
-    for i, kw in enumerate(keywords):
-        col1, col2 = st.columns([5, 1])
-        col1.write(kw)
-        if col2.button("❌", key=f"suppr_kw_{i}"):
-            keywords.pop(i)
-            save_keywords(keywords)
+    # Sauvegarder dictionnaire structuré
+    def save_keyword_dict(data):
+        with open(DICT_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+    # Charger liste plate
+    def load_flat_keywords():
+        if os.path.exists(FLAT_FILE):
+            with open(FLAT_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return []
+
+    # Sauvegarder liste plate
+    def save_flat_keywords(keywords):
+        with open(FLAT_FILE, "w", encoding="utf-8") as f:
+            json.dump(keywords, f, ensure_ascii=False, indent=2)
+
+    # Extraire mots principaux et synonymes
+    def get_all_suggestions(keyword_dict):
+        mots = set()
+        for mot, data in keyword_dict.items():
+            mots.add(mot)
+            mots.update(data.get("synonymes", []))
+        return sorted(mots)
+
+    # Chargement
+    danger_dict = load_keyword_dict()
+    flat_keywords = load_flat_keywords()
+    suggestions = get_all_suggestions(danger_dict)
+
+    # Interface utilisateur
+    st.markdown("### ➕ Ajouter un mot ou une expression clé dangereuse")
+
+    col1, col2 = st.columns([2, 3])
+    with col1:
+        selected_suggestion = st.selectbox("🔽 Suggestions existantes :", options=[""] + suggestions)
+
+    with col2:
+        custom_input = st.text_input("✍️ Ou saisissez un nouveau mot-clé")
+
+    mot_cle = custom_input.strip() or selected_suggestion.strip()
+
+    if st.button("✅ Ajouter ce mot-clé") and mot_cle:
+        if mot_cle in suggestions or mot_cle in flat_keywords:
+            st.info(f"ℹ️ Le mot-clé **{mot_cle}** est déjà présent.")
+        else:
+            # Ajout dans le dictionnaire structuré
+            danger_dict[mot_cle] = {
+                "synonymes": [],
+                "categorie": "Non catégorisé"
+            }
+            save_keyword_dict(danger_dict)
+
+            # Ajout dans la liste plate
+            flat_keywords.append(mot_cle)
+            save_flat_keywords(flat_keywords)
+
+            st.success(f"✅ Le mot-clé **{mot_cle}** a été ajouté dans les deux fichiers.")
         
 
-    new_keyword = st.text_input("Ajouter un mot-clé dangereux")
-    if st.button("Ajouter mot-clé") and new_keyword:
-        keywords.append(new_keyword)
-        save_keywords(keywords)
-        st.success("Mot-clé ajouté avec succès !")
+    with st.expander("🗂️ Voir et gérer les mots-clés dangereux existants"):
+        if flat_keywords:
+            for i, kw in enumerate(flat_keywords):
+                col1, col2 = st.columns([8, 1])
+                with col1:
+                    st.write(f"- {kw}")
+                with col2:
+                    if st.button("❌", key=f"del_{i}"):
+                        # Supprimer le mot de la liste plate
+                        flat_keywords.pop(i)
+                        save_flat_keywords(flat_keywords)
+
+                        # Supprimer du dictionnaire structuré s’il existe
+                        if kw in danger_dict:
+                            del danger_dict[kw]
+                            save_keyword_dict(danger_dict)
+
+                        st.rerun()  # Recharge la page après suppression
+        else:
+            st.info("Aucun mot-clé dangereux enregistré pour le moment.")
+
 
 # Page 3 : Lancer l'analyse
 elif page == "Lancer l'analyse":
@@ -936,61 +1008,57 @@ elif page == "Dashboard":
 
     st.markdown("---")
 
-    col_c, col_d = st.columns(2)
-    with col_c:
-        if 'published' in df.columns:
-            df_timeline = df.groupby(pd.Grouper(key='published', freq='D')).size().reset_index(name='count')
-            fig_timeline = px.line(df_timeline, x='published', y='count', title="Chronologie des articles")
-            st.plotly_chart(fig_timeline, use_container_width=True)
-        else:
-            st.info("Données de publication non disponibles")
+    # Charger tes données JSON
+    df = pd.DataFrame(load_articles())
 
-    with col_d:
-        st.info("Analyse de tendance ou polarité ici")
+    # Fonction pour extraire la "plateforme" à partir du lien
+    def get_platform(url):
+        try:
+            netloc = urlparse(url).netloc.lower()
+            if "facebook.com" in netloc:
+                return "Facebook"
+            elif "linkedin.com" in netloc:
+                return "LinkedIn"
+            elif "youtube.com" in netloc:
+                return "YouTube"
+            elif "instagram.com" in netloc:
+                return "Instagram"
+            elif "tiktok.com" in netloc:
+                return "TikTok"
+            elif "twitter.com" in netloc or "x.com" in netloc:
+                return "Twitter"
+            else:
+                return "Autre"
+        except:
+            return "Inconnu"
 
-    st.markdown("---")
+    # Créer une colonne "plateforme réelle"
+    df["plateforme"] = df["link"].apply(get_platform)
 
-    # --- Filtres et Treemap ---
-    st.subheader("Analyse des mots clés sensibles")
+    # Compter les mentions par plateforme
+    platform_counts = df["plateforme"].value_counts().reset_index()
+    platform_counts.columns = ["Plateforme", "Nombre de mentions"]
 
-    col_filtres, col_treemap = st.columns([1, 2.3])
-    with col_filtres:
-        st.markdown("### Filtres")
-        sources = df['source'].dropna().unique() if 'source' in df.columns else []
-        sentiments = df['sentiment'].dropna().unique() if 'sentiment' in df.columns else []
-        source_filter = multiselect_with_select_all("Filtrer par source", options=sources)
-        sentiment_filter = multiselect_with_select_all("Filtrer par sentiment", options=sentiments)
+    # Afficher le graphique
+    st.subheader("Mentions détectées par plateforme réelle")
+    fig = px.bar(
+        platform_counts,
+        x="Plateforme",
+        y="Nombre de mentions",
+        text="Nombre de mentions",
+        color="Plateforme",
+        color_discrete_sequence=px.colors.qualitative.Set2
+    )
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        title="Sources extraites par google",
+        yaxis_title="Nombre de mentions",
+        xaxis_title="Plateforme",
+        showlegend=False,
+        title_x=0.5
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
-    filtered_df = df[
-        (df['source'].isin(source_filter)) & (df['sentiment'].isin(sentiment_filter))
-    ] if not df.empty else pd.DataFrame()
+ 
 
-    mots = []
-    for texte in filtered_df.get("summary", []):
-        if isinstance(texte, str):
-            mots.extend(extraire_mots_cles_dangereux(texte, mots_cles_dangereux))
 
-    frequences = Counter(mots)
-    top_mots = frequences.most_common(30)
-
-    with col_treemap:
-        if not top_mots:
-            st.warning("Aucun mot dangereux trouvé avec les filtres sélectionnés.")
-        else:
-            df_mots = pd.DataFrame(top_mots, columns=["mot", "frequence"])
-            fig = px.treemap(
-                df_mots,
-                path=["mot"],
-                values="frequence",
-                color="frequence",
-                color_continuous_scale="Reds"
-            )
-            fig.update_layout(
-                margin=dict(t=30, l=0, r=0, b=0),
-                paper_bgcolor="#f5f5f5",
-                plot_bgcolor="#f5f5f5",
-                title="Treemap des mots dangereux",
-                title_x=0.5,
-                font=dict(size=14)
-            )
-            st.plotly_chart(fig, use_container_width=True)

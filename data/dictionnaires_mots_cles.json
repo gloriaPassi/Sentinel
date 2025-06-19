@@ -1,0 +1,121 @@
+{
+  "fraude": {
+    "synonymes": [
+      "escroquerie",
+      "arnaque",
+      "détournement",
+      "faux",
+      "falsification",
+      "contrefaçon",
+      "manipulation"
+    ],
+    "categorie": "Fraude et escroquerie"
+  },
+  "secte": {
+    "synonymes": [
+      "culte",
+      "endoctrinement",
+      "fanatisme",
+      "lavage de cerveau",
+      "embrigadement",
+      "charlatanisme"
+    ],
+    "categorie": "Sectes et dérives"
+  },
+  "corruption": {
+    "synonymes": [
+      "pots-de-vin",
+      "détournement de fonds",
+      "malversation",
+      "clientélisme",
+      "népotisme",
+      "trafic d'influence"
+    ],
+    "categorie": "Corruption"
+  },
+  "cyberattaque": {
+    "synonymes": [
+      "piratage",
+      "hacking",
+      "ransomware",
+      "malware",
+      "phishing",
+      "ddos",
+      "spyware",
+      "cybercriminalité"
+    ],
+    "categorie": "Cybercriminalité"
+  },
+  "violence": {
+    "synonymes": [
+      "agression",
+      "menace",
+      "harcèlement",
+      "intimidation",
+      "viol",
+      "meurtre",
+      "domestic violence",
+      "terrorisme"
+    ],
+    "categorie": "Violence"
+  },
+  "diffamation": {
+    "synonymes": [
+      "calomnie",
+      "injure",
+      "insulte",
+      "atteinte à l'honneur",
+      "propagande mensongère"
+    ],
+    "categorie": "Atteinte à la réputation"
+  },
+  "terrorisme": {
+    "synonymes": [
+      "attentat",
+      "radicalisation",
+      "extrémisme",
+      "bombardement",
+      "attaque",
+      "djihadisme"
+    ],
+    "categorie": "Terrorisme"
+  },
+  "drogue": {
+    "synonymes": [
+      "trafic de drogue",
+      "stupéfiants",
+      "narcotrafic",
+      "drogue illicite",
+      "consommation de drogue"
+    ],
+    "categorie": "Drogue et narcotrafic"
+  },
+  "discrimination": {
+    "synonymes": [
+      "racisme",
+      "xénophobie",
+      "sexisme",
+      "homophobie",
+      "intolérance",
+      "harcèlement moral"
+    ],
+    "categorie": "Discrimination et harcèlement"
+  },
+  "escroquerie financière": {
+    "synonymes": [
+      "blanchiment d'argent",
+      "fraude fiscale",
+      "évasion fiscale",
+      "manipulation boursière"
+    ],
+    "categorie": "Fraude financière"
+  },
+  "azerty": {
+    "synonymes": [],
+    "categorie": "Non catégorisé"
+  },
+  "américain": {
+    "synonymes": [],
+    "categorie": "Non catégorisé"
+  }
+}
