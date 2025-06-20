@@ -697,33 +697,44 @@ elif page == "Configuration":
     st.markdown("### ➕ Ajouter un mot ou une expression clé dangereuse")
 
     col1, col2 = st.columns([2, 3])
+
     with col1:
         selected_suggestion = st.selectbox("🔽 Suggestions existantes :", options=[""] + suggestions)
 
     with col2:
-        custom_input = st.text_input("✍️ Ou saisissez un nouveau mot-clé")
+        # Remplir automatiquement le champ texte avec la sélection, si elle existe
+        mot_cle = st.text_input(
+            "🔤 Entrez un mot ou une expression dangereuse",
+            value=selected_suggestion if selected_suggestion else "",
+        )
 
-    mot_cle = custom_input.strip() or selected_suggestion.strip()
 
-    if st.button("✅ Ajouter ce mot-clé") and mot_cle:
-        if mot_cle in suggestions or mot_cle in flat_keywords:
-            st.info(f"ℹ️ Le mot-clé **{mot_cle}** est déjà présent.")
-        else:
-            # Ajout dans le dictionnaire structuré
-            danger_dict[mot_cle] = {
-                "synonymes": [],
-                "categorie": "Non catégorisé"
-            }
-            save_keyword_dict(danger_dict)
+    # Affichage des deux boutons sur une même ligne
+    col1, col2 = st.columns(2)
 
-            # Ajout dans la liste plate
-            flat_keywords.append(mot_cle)
-            save_flat_keywords(flat_keywords)
+    with col1:
+        if st.button("📘 Ajouter au dictionnaire") and mot_cle:
+            if mot_cle in danger_dict:
+                st.info(f"ℹ️ Le mot-clé **{mot_cle}** est déjà dans le dictionnaire.")
+            else:
+                danger_dict[mot_cle] = {
+                    "synonymes": [],
+                    "categorie": "Non catégorisé"
+                }
+                save_keyword_dict(danger_dict)
+                st.success(f"✅ Le mot-clé **{mot_cle}** a été ajouté au dictionnaire structuré.")
 
-            st.success(f"✅ Le mot-clé **{mot_cle}** a été ajouté dans les deux fichiers.")
-        
+    with col2:
+        if st.button("📕 Ajouter à la liste des mots clés") and mot_cle:
+            if mot_cle in flat_keywords:
+                st.info(f"ℹ️ Le mot-clé **{mot_cle}** est déjà dans la liste des mots à analyser.")
+            else:
+                flat_keywords.append(mot_cle)
+                save_flat_keywords(flat_keywords)
+                st.success(f"✅ Le mot-clé **{mot_cle}** a été ajouté pour l'analyse.")
 
-    with st.expander("🗂️ Voir et gérer les mots-clés dangereux existants"):
+
+    with st.expander("🗂️ les mots-clés dangereux à analyser"):
         if flat_keywords:
             for i, kw in enumerate(flat_keywords):
                 col1, col2 = st.columns([8, 1])
@@ -731,7 +742,7 @@ elif page == "Configuration":
                     st.write(f"- {kw}")
                 with col2:
                     if st.button("❌", key=f"del_{i}"):
-                        # Supprimer le mot de la liste plate
+                        # Supprimer le mot de la liste 
                         flat_keywords.pop(i)
                         save_flat_keywords(flat_keywords)
 
