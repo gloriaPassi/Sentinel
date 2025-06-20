@@ -725,9 +725,9 @@ elif page == "Configuration":
                 st.success(f"✅ Le mot-clé **{mot_cle}** a été ajouté au dictionnaire structuré.")
 
     with col2:
-        if st.button("📕 Ajouter à la liste des mots clés") and mot_cle:
+        if st.button("📕 Ajouter à la liste des mots clés et expressions") and mot_cle:
             if mot_cle in flat_keywords:
-                st.info(f"ℹ️ Le mot-clé **{mot_cle}** est déjà dans la liste des mots à analyser.")
+                st.info(f"ℹ️ Le mot-clé **{mot_cle}** est déjà dans la liste des mots et expressions à analyser.")
             else:
                 flat_keywords.append(mot_cle)
                 save_flat_keywords(flat_keywords)
